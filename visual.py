@@ -18,29 +18,33 @@ pygame.display.set_caption('connect4')
 black = (0, 0, 0)
 blue = (0 ,0, 255)
 red = (255, 0, 0)
+green = (0, 255, 0)
 yellow = (255, 255, 0)
+white = (255, 255, 255)
 game  = Game()
 
 def draw_board(board):
-    for row in range(board.rows):
-        for col in range(board.cols):
+    for row in range(rows):
+        for col in range(cols):
             pygame.draw.rect(screen, blue, (col * cell_size, row*cell_size, cell_size, cell_size))
             x = col*cell_size + cell_size / 2
             y = row*cell_size + cell_size / 2
             if board.grid[row][col] == ' ':
-                color = 'black'
+                color = black
             elif board.grid[row][col] == 'X':
-                color = 'red'
+                color = red
             elif board.grid[row][col] == 'O':
-                color = 'yellow'
+                color = yellow
             pygame.draw.circle(screen, color, (x,y), cell_size / 2)
 
 # game starts
 
 running = True
 winner = None
+font = pygame.font.Font(None, 70)
 
 while running:
+    screen.fill(black)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -51,14 +55,22 @@ while running:
             if row != None:
                 if game.board.check_win(row, col, game.current_player):
                     winner = game.current_player
-                    print(f'player {winner} wins!')
-                elif game.board.grid[0][0] != ' ' and game.board.grid[0][1] != ' ' and game.board.grid[0][2] != ' ' and game.board.grid[0][3] != ' ' and game.board.grid[0][4] != ' ':
-                    print('it is a tie')
+                    message = f'Player {winner} wins!'
+                    text = font.render(message, True, green)
+                    rect = text.get_rect(center=(width//2, height//2))
+                    screen.blit(text, rect)
+                elif all(game.board.grid[0][col] != ' ' for col in range(cols)):
+                    message = 'it is a tie'
+                    text = font.render(message, True, green)
+                    rect = text.get_rect(center=(width//2, height//2))
+                    winner = 'Draw'
+                    screen.blit(text, rect)
                 else:
                     game.switch_player()
 
-    screen.fill(black)
     draw_board(game.board)
+    if winner is not None:
+        screen.blit(text, rect)
     pygame.display.update()
 
 pygame.quit()
