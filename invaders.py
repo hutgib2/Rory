@@ -31,7 +31,7 @@ while running:
         screen.fill((0,0,0))
         title = font.render("illegal invaders", True, (0, 255, 0))
         opt_1 = font.render("Press 1 for grandma difficulty", True, (0, 255, 0))
-        opt_2 = font.render("Press 2 for generic difficulty", True, (0, 128, 128))
+        opt_2 = font.render("Press 2 for generic difficulty", True, (200, 200, 0))
         opt_3 = font.render("Press 3 for literally impossible difficulty", True, (100, 0, 0))
         screen.blit(title, (width//2-150, height // 2-100))
         screen.blit(opt_1, (width//2-150, height // 2+50))
