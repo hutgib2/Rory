@@ -118,9 +118,14 @@ while running:
         for bullet in bullets[:]:
             for enemy in enemies[:]:
                 if abs(bullet[0] - enemy[0]) <= 64 and abs(bullet[1] - enemy[1]) <= 64:
-                        bullets.remove(bullet)
+                        try:
+                            bullets.remove(bullet)
+                        except ValueError:
+                            continue
                         enemies.remove(enemy)
                         score += 1
+                        if len(enemies) < 1:
+                            game_state = "win"
 
         for enemy_bullet in enemy_bullets[:]:
             if abs(enemy_bullet[0] - player_x) <= 32 and abs(enemy_bullet[1] - player_y) <= 32:
@@ -143,6 +148,18 @@ while running:
         game_over_text = font.render("Congratulations, you just doomed humanity because of your incompetence", True,(100, 0, 0))
         score_text = font.render(f"final score: {score}", True, (255, 255, 255))
         screen.blit(game_over_text, (300, height // 2 - 100))
+        screen.blit(score_text, (width // 2 - 100, height // 2 + 50))
+        pygame.display.update()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+    if game_state == "win":
+        screen.fill((0, 0, 0,))
+        win_text = font.render("Congratulations! That'll teach em!", True,(0, 255, 0))
+        score_text = font.render(f"final score: {score}", True, (255, 255, 255))
+        screen.blit(win_text, (640, height // 2 - 100))
         screen.blit(score_text, (width // 2 - 100, height // 2 + 50))
         pygame.display.update()
 
