@@ -1,7 +1,7 @@
 #Import packages
 import pygame
 import sys
-
+import random
 # Initialise pygame
 pygame.init()
 font = pygame.font.SysFont(None, 36)
@@ -21,6 +21,9 @@ bullets = []
 bullet_speed = 16
 enemies = []
 enemy_speed = 0
+enemy_bullets = []
+enemy_bullet_speed = 8
+chance = 0
 score = 0
 for i in range(12):
     for j in range(5):
@@ -47,14 +50,18 @@ while running:
                     difficulty = "grandma"
                     game_state = "playing"
                     enemy_speed = 1
+                    chance = 0
                 if event.key == pygame.K_2:
                     difficulty = "generic"
                     game_state = "playing"
                     enemy_speed = 5
+                    chance = 0.001
                 if event.key == pygame.K_3:
                     difficulty = "literally impossible"
                     game_state = "playing"
                     enemy_speed = 16
+                    chance 0.01
+
 
      
     if game_state == "playing":
@@ -80,7 +87,17 @@ while running:
             bullet[1] -= bullet_speed
             if bullet[1] < 0:
                 bullets.remove(bullet)
+        
+        for enemy_bullet in enemy_bullets:
+            enemy_bullet[1]  += enemy_bullet_speed
+            if enemy_bullet[1] < 0:
+                enemy_bullets.remove(enemy_bullet)
+        
+        
         for enemy in enemies:
+            if random.random() < chance:
+                enemy_bullets.append([enemy[0]+32,  enemy[1]])
+
             if difficulty != "literally impossible":
                 enemy[0] += enemy_speed
                 if enemy[0] > width-40 or enemy[0] < 0:
@@ -110,6 +127,8 @@ while running:
             pygame.draw.rect(screen, (255, 255, 255), (bullet[0], bullet[1], 8, 16))
         for enemy in enemies:
             pygame.draw.rect(screen, (255, 0, 0), (enemy[0], enemy[1], 64, 64))
+        for enemy_bullet in enemy_bullets:
+            pygame.draw.rect(screen, (0, 0, 255), (enemy_bullet[0], enemy_bullet[1], 8, 16))
         text = font.render(f'Score: {score}', True, (255, 255, 255))
         screen.blit(text, (10, 10))
         pygame.display.update()
