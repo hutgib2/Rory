@@ -19,6 +19,8 @@ player_x = width // 2
 player_y = height // 2
 player_speed = 16
 direction = (0, -1)
+dx = 1
+dy = 0
 # bullets
 bullets = []
 bullet_speed = 32
@@ -52,23 +54,26 @@ while running:
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
+                if event.key == pygame.K_k:
                     bullets.append([player_x, player_y, direction[0], direction[1]])
-
+    dx = 0
+    dy = 0
     keys = pygame.key.get_pressed()
     if keys[pygame.K_a]:
         player_x -= player_speed
-        direction = (-1, 0)
+        dx = -1
     if keys[pygame.K_d]:
         player_x += player_speed
-        direction = (1, 0)
+        dx = 1
     if keys[pygame.K_s]:
         player_y += player_speed
-        direction = (0, 1)
+        dy = 1
     if keys[pygame.K_w]:
         player_y -= player_speed
-        direction = (0, -1)
-    
+        dy = -1
+    direction = [dx, dy]
+    while direction == [0, 0]:
+        direction = [random.randint(-1, 2), random.randint(-1, 2)]
     player_x =  max(0, min(player_x, width - 64))
     player_y = max(0, min(player_y, height - 64))
 
@@ -115,7 +120,7 @@ while running:
         pygame.draw.rect(screen, (255, 0, 0), (enemy[0], enemy[1], 64, 64))
 
     for bullet in bullets:
-            pygame.draw.rect(screen, (255, 255, 255), (bullet[0], bullet[1], 8, 16))
+            pygame.draw.rect(screen, (255, 255, 255), (bullet[0], bullet[1], 32, 32))
 
     screen.blit(font.render(f"score: {score}", True, (255,255,255)), (16, 16))
     screen.blit(font.render(f"current wave: {current_wave}", True, (255,255,255)), (512, 16))
