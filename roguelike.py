@@ -89,23 +89,23 @@ while running:
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_k:
+                if event.key == pygame.K_k or event.key == pygame.K_SPACE:
                     bullets.append([player_x, player_y, direction[0], direction[1]])
                 if game_over and event.key == pygame.K_r:
                     reset_game()
     dx = 0
     dy = 0
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_a]:
+    if keys[pygame.K_a] or keys[pygame.K_LEFT]:
         player_x -= player_speed
         dx = -1
-    if keys[pygame.K_d]:
+    if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
         player_x += player_speed
         dx = 1
-    if keys[pygame.K_s]:
+    if keys[pygame.K_s] or keys[pygame.K_DOWN]:
         player_y += player_speed
         dy = 1
-    if keys[pygame.K_w]:
+    if keys[pygame.K_w] or keys[pygame.K_UP]:
         player_y -= player_speed
         dy = -1
     direction = [dx, dy]
