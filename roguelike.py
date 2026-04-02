@@ -2,6 +2,7 @@
 import pygame
 import sys
 import random
+import math
 # import images
 # Initialise pygame
 pygame.init()
@@ -15,6 +16,8 @@ screen = pygame.display.set_mode((width, height))
 running = True
 clock = pygame.time.Clock()
 score = 0
+angle = 0
+radius = 200
 # player
 player_x = width // 2
 player_y = height // 2
@@ -79,7 +82,9 @@ running = True
 while running:
     clock.tick(60)
     screen.fill((0,0,0))
-
+    angle += 0.1
+    tip_x = player_x + 32 + radius * math.cos(angle)
+    tip_y = player_y + 32 + radius * math.sin(angle)
     for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -141,12 +146,27 @@ while running:
                         for i in range(current_wave):
                             enemies.append(spawn_enemy())
                     break
+        for enemy in enemies[:]:
+            dif_x = enemy[0] - (player_x + 32)
+            dif_y = enemy[1] - (player_y + 32)
+            distance = math.hypot(dif_x, dif_y)
+            dif_angle = abs(math.atan2(dif_y, dif_x) - angle)  % (2 * math.pi)
+            if (distance <= radius) and (dif_angle <= math.radians(30)):
+                enemies.remove(enemy)
+                score += 1
+                if len(enemies) ==  0:
+                    current_wave += 1
+                    for i in range(current_wave):
+                        enemies.append(spawn_enemy())
+                break
 
         for enemy in enemies[:]:
             if abs(enemy[0] - player_x) <= 64 and abs(enemy[1] - player_y) <= 64:
                 game_over = True
 
     pygame.draw.rect(screen, (0, 255, 0),  (player_x, player_y, 64, 64))
+    # pygame.draw.rect(screen, (255, 255, 0),  (tip_x-64, tip_y-16, 128, 32))
+    pygame.draw.line(screen, (255, 255, 0), (player_x+32, player_y+32), (tip_x, tip_y), 16)
 
     for enemy in enemies:
         pygame.draw.rect(screen, (255, 0, 0), (enemy[0], enemy[1], 64, 64))
