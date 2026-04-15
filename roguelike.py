@@ -56,6 +56,32 @@ def spawn_boss():
     elif side == 'right':
         return {'x': width, 'y': random.randint(0, height), 'speed': 2, 'health': current_wave, 'type': 'boss'}
 
+def kill_enemy(enemy):
+    global score
+    score += 1
+    enemies.remove(enemy)
+
+def next_wave():
+    global current_wave
+    current_wave += 1
+    for i in range(current_wave):
+        enemies.append(spawn_enemy())
+        if (i+1) % 5 == 0 and current_wave %5 == 0:
+            enemies.append(spawn_boss())
+
+def load_high_score():
+    try:
+        with open("highscore.txt", "r") as file:
+            return int(file.read())
+    except FileNotFoundError:
+        return 0
+
+def save_high_score(new_score):
+    with open("highscore.txt", "w") as file:
+        file.write(str(new_score))
+
+highscore = load_high_score()
+
 def reset_game():
     global game_over, player_x, player_y, bullets, enemies, score, current_wave
     game_over = False
@@ -147,14 +173,9 @@ while running:
                         continue
                     enemy['health'] -= 1
                     if enemy['health'] == 0:
-                        enemies.remove(enemy)
-                        score += 1
+                        kill_enemy(enemy)
                     if len(enemies) ==  0:
-                        current_wave += 1
-                        for i in range(current_wave):
-                            enemies.append(spawn_enemy())
-                            if (i+1) % 5 == 0 and current_wave % 5 == 0:
-                                enemies.append(spawn_boss())
+                        next_wave()
                     break
         for enemy in enemies[:]:
             dif_x = enemy['x'] - (player_x + 32)
@@ -164,14 +185,9 @@ while running:
             if (distance <= radius) and (dif_angle <= math.radians(30)):
                 enemy['health'] -= 1
                 if enemy['health'] == 0:
-                    enemies.remove(enemy)
-                    score += 1
+                    kill_enemy(enemy)
                 if len(enemies) ==  0:
-                    current_wave += 1
-                    for i in range(current_wave):
-                        enemies.append(spawn_enemy())
-                        if (i+1) % 5 == 0 and current_wave %5 == 0:
-                            enemies.append(spawn_boss())
+                    next_wave()
                 break
 
         for enemy in enemies[:]:
@@ -192,8 +208,12 @@ while running:
 
     screen.blit(font.render(f"score: {score}", True, (255,255,255)), (16, 16))
     screen.blit(font.render(f"current wave: {current_wave}", True, (255,255,255)), (512, 16))
+    screen.blit(font.render(f"high score: {highscore}", True, (255,255,255)), (1280, 16))
 
     if game_over:
+        if score > highscore:
+            highscore = score
+            save_high_score(score)
         screen.blit(font.render("doomslayer has been slayed", True, (128,0,0)), (width // 5, height // 2))
         screen.blit(font.render("Press R to restart", True, (255,255,255)), (width // 5, height // 1.5))
         pygame.display.update()
