@@ -33,6 +33,7 @@ bullet_speed = 32
 enemies = []
 enemy_speed = 8
 current_wave = 1
+invincible_timer = 0
 
 def spawn_enemy():
     side = random.choice(['left', 'right', 'top', 'bottom'])
@@ -74,8 +75,9 @@ def kill_enemy(enemy):
     enemies.remove(enemy)
 
 def next_wave():
-    global current_wave
+    global current_wave, invincible_timer
     current_wave += 1
+    invincible_timer = 60
     for i in range(current_wave):
         enemies.append(spawn_enemy())
         if (i+1) % 5 == 0 and current_wave %5 == 0:
@@ -137,6 +139,8 @@ while start_screen:
 
 while running:
     clock.tick(60)
+    if invincible_timer > 0:
+        invincible_timer -= 1
     screen.fill((0,0,0))
     angle += 0.1
     tip_x = player_x + 32 + radius * math.cos(angle)
@@ -215,12 +219,12 @@ while running:
                 break
 
         for enemy in enemies[:]:
-            if colliding(player_x, player_y, 64, enemy['x'], enemy['y'], enemy['size']):
+            if colliding(player_x, player_y, 64, enemy['x'], enemy['y'], enemy['size']) and invincible_timer == 0:
                 game_over = True
 
-    pygame.draw.rect(screen, (0, 255, 0),  (player_x, player_y, 64, 64))
-    # pygame.draw.rect(screen, (255, 255, 0),  (tip_x-64, tip_y-16, 128, 32))
-    pygame.draw.line(screen, (255, 255, 0), (player_x+32, player_y+32), (tip_x, tip_y), 16)
+    if invincible_timer == 0 or invincible_timer % 10 < 5:
+        pygame.draw.rect(screen, (0, 255, 0),  (player_x, player_y, 64, 64))
+        pygame.draw.line(screen, (255, 255, 0), (player_x+32, player_y+32), (tip_x, tip_y), 16)
 
     for enemy in enemies:
         if enemy['type'] == 'minion':
