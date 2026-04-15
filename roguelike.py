@@ -56,6 +56,16 @@ def spawn_boss():
     elif side == 'right':
         return {'x': width, 'y': random.randint(0, height), 'speed': 2, 'health': current_wave, 'type': 'boss'}
 
+def reset_game():
+    global game_over, player_x, player_y, bullets, enemies, score, current_wave
+    game_over = False
+    score = 0
+    player_x = width // 2
+    player_y = height // 2
+    bullets = []
+    enemies = [spawn_enemy()]
+    current_wave = 1
+
 
 for i in range(1):
     enemies.append(spawn_enemy())
@@ -185,9 +195,8 @@ while running:
 
     if game_over:
         screen.blit(font.render("doomslayer has been slayed", True, (128,0,0)), (width // 5, height // 2))
+        screen.blit(font.render("Press R to restart", True, (255,255,255)), (width // 5, height // 1.5))
         pygame.display.update()
-        pygame.time.wait(2000)
-        running = False
     pygame.display.update()
 
 pygame.quit()
