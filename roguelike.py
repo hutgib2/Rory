@@ -19,6 +19,7 @@ score = 0
 angle = 0
 radius = 200
 start_screen = True
+player_health = 3
 # player
 player_x = width // 2
 player_y = height // 2
@@ -75,9 +76,11 @@ def kill_enemy(enemy):
     enemies.remove(enemy)
 
 def next_wave():
-    global current_wave, invincible_timer
+    global current_wave, invincible_timer, player_health
     current_wave += 1
     invincible_timer = 60
+    if player_health < 3:
+        player_health += 1
     for i in range(current_wave):
         enemies.append(spawn_enemy())
         if (i+1) % 5 == 0 and current_wave %5 == 0:
@@ -109,7 +112,7 @@ def save_high_score(new_score):
 highscore = load_high_score()
 
 def reset_game():
-    global game_over, player_x, player_y, bullets, enemies, score, current_wave
+    global game_over, player_x, player_y, bullets, enemies, score, current_wave, player_health, invincible_timer
     game_over = False
     score = 0
     player_x = width // 2
@@ -117,6 +120,8 @@ def reset_game():
     bullets = []
     enemies = [spawn_enemy()]
     current_wave = 1
+    player_health = 3
+    invincible_timer = 0
 
 
 for i in range(1):
@@ -220,7 +225,13 @@ while running:
 
         for enemy in enemies[:]:
             if colliding(player_x, player_y, 64, enemy['x'], enemy['y'], enemy['size']) and invincible_timer == 0:
-                game_over = True
+                player_health -= 1
+                invincible_timer = 60
+                if player_health <= 0:
+                    game_over = True
+
+    pygame.draw.rect(screen, (255, 0, 0), (16, 100, 600, 40))
+    pygame.draw.rect(screen, (0, 255, 0), (16, 100, int(600*(player_health / 3)), 40))
 
     if invincible_timer == 0 or invincible_timer % 10 < 5:
         pygame.draw.rect(screen, (0, 255, 0),  (player_x, player_y, 64, 64))
@@ -238,7 +249,7 @@ while running:
 
     screen.blit(font.render(f"score: {score}", True, (255,255,255)), (16, 16))
     screen.blit(font.render(f"current wave: {current_wave}", True, (255,255,255)), (512, 16))
-    screen.blit(font.render(f"high score: {highscore}", True, (255,255,255)), (1280, 16))
+    screen.blit(font.render(f"high score: {max(highscore,score)}", True, (255,255,255)), (1280, 16))
 
     if game_over:
         if score > highscore:
