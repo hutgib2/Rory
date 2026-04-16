@@ -37,7 +37,7 @@ enemies = []
 enemy_speed = 8
 current_wave = 1
 invincible_timer = 0
-last_idle_direction = [0,0]
+last_idle_direction = (0,0)
 
 def spawn_enemy():
     side = random.choice(['left', 'right', 'top', 'bottom'])
@@ -97,7 +97,7 @@ def choose_direction():
 def kill_enemy(enemy):
     global score
     score += 1
-    if random.random() <= 0.1:
+    if random.random() <= 0.01:
         powerups.append(spawn_powerup(enemy))
     enemies.remove(enemy)
 
@@ -173,9 +173,13 @@ while running:
     if invincible_timer > 0:
         invincible_timer -= 1
     screen.fill((0,0,0))
+    
+    # SWORD
     angle += 0.1
     tip_x = player_x + 32 + radius * math.cos(angle)
     tip_y = player_y + 32 + radius * math.sin(angle)
+    
+    # INPUTS
     for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -206,6 +210,8 @@ while running:
     player_y = max(0, min(player_y, height - 64))
 
     if not game_over:
+
+# MOVE ENEMIES
         for enemy in enemies:
             if enemy['x'] < player_x:
                 enemy['x'] += enemy['speed']
@@ -216,6 +222,7 @@ while running:
             elif enemy['y'] > player_y:
                 enemy['y'] -= enemy['speed']
 
+# POWERUPS
         for powerup in powerups[:]:
             powerup['timer'] -= 1
             if powerup['timer'] == 0:
@@ -231,7 +238,7 @@ while running:
                 remove_powerup(effect)
                 del active_effects[effect]
             
-
+# MOVE BULLETS
         for bullet in bullets[:]:
             bullet[0] -= bullet[2]*bullet_speed
             bullet[1] -= bullet[3]*bullet_speed
@@ -239,7 +246,8 @@ while running:
             if bullet[0] < 0 or bullet[0] > width or bullet[1] < 0 or bullet[1] > height:
                 bullets.remove(bullet)
                 continue
-            
+# COLLISIONS
+    # ENEMY AND BULLET            
             for enemy in enemies[:]:
                 if colliding(bullet[0], bullet[1], 32, enemy['x'], enemy['y'], enemy['size']):
                     try:
@@ -252,6 +260,8 @@ while running:
                     if len(enemies) ==  0:
                         next_wave()
                     break
+
+    # ENEMY AND SWORD                    
         for enemy in enemies[:]:
             dif_x = enemy['x'] - (player_x + 32)
             dif_y = enemy['y'] - (player_y + 32)
@@ -265,6 +275,7 @@ while running:
                     next_wave()
                 break
 
+    # ENEMY AND PLAYER
         for enemy in enemies[:]:
             if colliding(player_x, player_y, 64, enemy['x'], enemy['y'], enemy['size']) and invincible_timer == 0:
                 player_health -= 1
@@ -272,29 +283,37 @@ while running:
                 if player_health <= 0:
                     game_over = True
 
+# DRAWING
+    # HEALTH BAR
     pygame.draw.rect(screen, (255, 0, 0), (16, 100, 600, 40))
     pygame.draw.rect(screen, (0, 255, 0), (16, 100, int(600*(player_health / 3)), 40))
 
+    # PLAYER
     if invincible_timer == 0 or invincible_timer % 10 < 5:
         pygame.draw.rect(screen, (0, 255, 0),  (player_x, player_y, 64, 64))
         pygame.draw.line(screen, (255, 255, 0), (player_x+32, player_y+32), (tip_x, tip_y), 16)
 
+    # ENEMIES
     for enemy in enemies:
         if enemy['type'] == 'minion':
             pygame.draw.rect(screen, (255, 0, 0), (enemy['x'], enemy['y'], 64, 64))
         elif enemy['type'] == 'mob':
             pygame.draw.rect(screen, (0, 255, 255), (enemy['x'], enemy['y'], 32, 32))
         else:
-            pygame.draw.rect(screen, (255, 0, 255), (enemy['x'], enemy['y'], 256, 256))
+            pygame.draw.rect(screen, (255, 0, 255), (enemy['x'], enemy['y'], 64 + 192*(enemy['health']/current_wave), 64 + 192*(enemy['health']/current_wave)))
+    # BULLETS
     for bullet in bullets:
             pygame.draw.rect(screen, (255, 255, 255), (bullet[0], bullet[1], 32, 32))
+    # POWERUPS
     for powerup in powerups:
         pygame.draw.circle(screen, (80, 255, 80), (powerup['x'], powerup['y']), 20)
 
+    # SCORES
     screen.blit(font.render(f"score: {score}", True, (255,255,255)), (16, 16))
     screen.blit(font.render(f"current wave: {current_wave}", True, (255,255,255)), (512, 16))
     screen.blit(font.render(f"high score: {max(highscore,score)}", True, (255,255,255)), (1280, 16))
 
+    # HIGHSCORE
     if game_over:
         if score > highscore:
             highscore = score
