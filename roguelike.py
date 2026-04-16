@@ -73,14 +73,22 @@ def spawn_mob():
         return {'x': width, 'y': random.randint(0, height), 'speed': 10, 'health': 1, 'type': 'mob', 'size': 32}
 
 def spawn_powerup(enemy):
-    #return {'type': 'nuke', 'x': enemy[0], 'y': enemy[1], 'timer': 1}
-    return {'type': 'speed boost', 'x': enemy['x'], 'y': enemy['y'], 'timer': 600}
+    ptype = random.choices(['speed boost', 'nuke'], weights = [50, 50])[0]
+    if ptype == 'nuke':
+        return {'type': 'nuke', 'x': enemy['x'], 'y': enemy['y'], 'timer': 1000}
+    if ptype == 'speed boost':
+        return {'type': 'speed boost', 'x': enemy['x'], 'y': enemy['y'], 'timer': 1000}
 
 def apply_powerup(ptype):
-    global player_speed
+    global player_speed, score, enemies
     if ptype == 'speed boost':
         player_speed = 16
-    active_effects[ptype] = 300
+        active_effects[ptype] = 300
+    if ptype == 'nuke':
+        score += len(enemies)
+        enemies = []
+        next_wave()
+        active_effects[ptype] = 1
 
 def remove_powerup(ptype):
     global player_speed
@@ -97,7 +105,7 @@ def choose_direction():
 def kill_enemy(enemy):
     global score
     score += 1
-    if random.random() <= 0.01:
+    if random.random() <= 0.025:
         powerups.append(spawn_powerup(enemy))
     enemies.remove(enemy)
 
@@ -109,7 +117,7 @@ def next_wave():
         player_health += 1
     for i in range(current_wave):
         enemies.append(spawn_enemy())
-        if (i+1) % 5 == 0 and current_wave %5 == 0:
+        if i == 0 and current_wave %5 == 0:
             enemies.append(spawn_boss())
         if (i+1) % 3 == 0 and current_wave %3 == 0:
             enemies.append(spawn_mob())
@@ -306,7 +314,10 @@ while running:
             pygame.draw.rect(screen, (255, 255, 255), (bullet[0], bullet[1], 32, 32))
     # POWERUPS
     for powerup in powerups:
-        pygame.draw.circle(screen, (80, 255, 80), (powerup['x'], powerup['y']), 20)
+        if powerup['type'] == 'speed boost':
+            pygame.draw.circle(screen, (80, 255, 80), (powerup['x'], powerup['y']), 20)
+        if powerup['type'] == 'nuke':
+            pygame.draw.circle(screen, (255, 0, 255), (powerup['x'], powerup['y']), 20)
 
     # SCORES
     screen.blit(font.render(f"score: {score}", True, (255,255,255)), (16, 16))
