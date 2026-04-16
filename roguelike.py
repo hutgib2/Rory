@@ -20,6 +20,8 @@ angle = 0
 radius = 200
 start_screen = True
 player_health = 3
+powerups = []
+active_effects = {}
 # player
 player_x = width // 2
 player_y = height // 2
@@ -35,6 +37,7 @@ enemies = []
 enemy_speed = 8
 current_wave = 1
 invincible_timer = 0
+last_idle_direction = [0,0]
 
 def spawn_enemy():
     side = random.choice(['left', 'right', 'top', 'bottom'])
@@ -69,10 +72,33 @@ def spawn_mob():
     elif side == 'right':
         return {'x': width, 'y': random.randint(0, height), 'speed': 10, 'health': 1, 'type': 'mob', 'size': 32}
 
+def spawn_powerup(enemy):
+    #return {'type': 'nuke', 'x': enemy[0], 'y': enemy[1], 'timer': 1}
+    return {'type': 'speed boost', 'x': enemy['x'], 'y': enemy['y'], 'timer': 600}
+
+def apply_powerup(ptype):
+    global player_speed
+    if ptype == 'speed boost':
+        player_speed = 16
+    active_effects[ptype] = 300
+
+def remove_powerup(ptype):
+    global player_speed
+    if ptype == 'speed boost':
+        player_speed = 8
+
+def choose_direction():
+    global direction, last_idle_direction
+    directions = [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [-1, -1], [1, -1], [-1, 1]]
+    while direction == [0, 0] or direction == last_idle_direction:
+        direction = random.choice(directions)
+    last_idle_direction = direction
 
 def kill_enemy(enemy):
     global score
     score += 1
+    if random.random() <= 0.1:
+        powerups.append(spawn_powerup(enemy))
     enemies.remove(enemy)
 
 def next_wave():
@@ -155,6 +181,9 @@ while running:
                 running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_k or event.key == pygame.K_SPACE:
+                    direction = [dx, dy]
+                    if direction == [0,0]:
+                        choose_direction()
                     bullets.append([player_x, player_y, direction[0], direction[1]])
                 if game_over and event.key == pygame.K_r:
                     reset_game()
@@ -173,9 +202,6 @@ while running:
     if keys[pygame.K_w] or keys[pygame.K_UP]:
         player_y -= player_speed
         dy = -1
-    direction = [dx, dy]
-    while direction == [0, 0]:
-        direction = [random.randint(-1, 2), random.randint(-1, 2)]
     player_x =  max(0, min(player_x, width - 64))
     player_y = max(0, min(player_y, height - 64))
 
@@ -189,6 +215,22 @@ while running:
                 enemy['y'] += enemy['speed']
             elif enemy['y'] > player_y:
                 enemy['y'] -= enemy['speed']
+
+        for powerup in powerups[:]:
+            powerup['timer'] -= 1
+            if powerup['timer'] == 0:
+                powerups.remove(powerup)
+                continue
+            if colliding(player_x, player_y, 64, powerup['x'], powerup['y'], 32):
+                apply_powerup(powerup['type'])
+                powerups.remove(powerup)
+
+        for effect in list(active_effects.keys()):
+            active_effects[effect] -= 1
+            if active_effects[effect] <= 0:
+                remove_powerup(effect)
+                del active_effects[effect]
+            
 
         for bullet in bullets[:]:
             bullet[0] -= bullet[2]*bullet_speed
@@ -246,6 +288,8 @@ while running:
             pygame.draw.rect(screen, (255, 0, 255), (enemy['x'], enemy['y'], 256, 256))
     for bullet in bullets:
             pygame.draw.rect(screen, (255, 255, 255), (bullet[0], bullet[1], 32, 32))
+    for powerup in powerups:
+        pygame.draw.circle(screen, (80, 255, 80), (powerup['x'], powerup['y']), 20)
 
     screen.blit(font.render(f"score: {score}", True, (255,255,255)), (16, 16))
     screen.blit(font.render(f"current wave: {current_wave}", True, (255,255,255)), (512, 16))
