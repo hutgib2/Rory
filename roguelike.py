@@ -73,14 +73,20 @@ def spawn_mob():
         return {'x': width, 'y': random.randint(0, height), 'speed': 10, 'health': 1, 'type': 'mob', 'size': 32}
 
 def spawn_powerup(enemy):
-    ptype = random.choices(['speed boost', 'nuke'], weights = [50, 50])[0]
-    if ptype == 'nuke':
-        return {'type': 'nuke', 'x': enemy['x'], 'y': enemy['y'], 'timer': 1000}
+    ptype = random.choices(['speed boost', 'nuke', 'long reach', 'rear shot', 'side shot'], weights = [20, 20, 20, 20, 20])[0]
     if ptype == 'speed boost':
         return {'type': 'speed boost', 'x': enemy['x'], 'y': enemy['y'], 'timer': 1000}
+    if ptype == 'nuke':
+        return {'type': 'nuke', 'x': enemy['x'], 'y': enemy['y'], 'timer': 1000}
+    if ptype == 'long reach':
+        return {'type': 'long reach', 'x': enemy['x'], 'y': enemy['y'], 'timer': 1000}
+    if ptype == 'rear shot':
+        return {'type': 'rear shot', 'x': enemy['x'], 'y': enemy['y'], 'timer': 1000}
+    if ptype == 'side shot':
+        return {'type': 'side shot', 'x': enemy['x'], 'y': enemy['y'], 'timer': 1000}
 
 def apply_powerup(ptype):
-    global player_speed, score, enemies
+    global player_speed, score, enemies, radius
     if ptype == 'speed boost':
         player_speed = 16
         active_effects[ptype] = 300
@@ -88,12 +94,21 @@ def apply_powerup(ptype):
         score += len(enemies)
         enemies = []
         next_wave()
-        active_effects[ptype] = 1
+    if ptype == 'long reach':
+        radius = 600
+        active_effects[ptype] = 300
+    if ptype == 'rear shot':
+        active_effects[ptype] = 300
+    if ptype == 'side shot':
+        active_effects[ptype] = 300
+
 
 def remove_powerup(ptype):
-    global player_speed
+    global player_speed, radius
     if ptype == 'speed boost':
         player_speed = 8
+    if ptype == 'long reach':
+        radius = 200
 
 def choose_direction():
     global direction, last_idle_direction
@@ -110,9 +125,10 @@ def kill_enemy(enemy):
     enemies.remove(enemy)
 
 def next_wave():
-    global current_wave, invincible_timer, player_health
+    global current_wave, player_health, player_x, player_y
     current_wave += 1
-    invincible_timer = 60
+    player_x = width // 2
+    player_y = height // 2
     if player_health < 3:
         player_health += 1
     for i in range(current_wave):
@@ -196,6 +212,11 @@ while running:
                     direction = [dx, dy]
                     if direction == [0,0]:
                         choose_direction()
+                    if 'rear shot' in active_effects:
+                        bullets.append([player_x, player_y, -direction[0], -direction[1]])
+                    if 'side shot' in active_effects:
+                        bullets.append([player_x, player_y, direction[1], direction[0]])
+                        bullets.append([player_x, player_y, -direction[1], -direction[0]])
                     bullets.append([player_x, player_y, direction[0], direction[1]])
                 if game_over and event.key == pygame.K_r:
                     reset_game()
@@ -315,9 +336,15 @@ while running:
     # POWERUPS
     for powerup in powerups:
         if powerup['type'] == 'speed boost':
-            pygame.draw.circle(screen, (80, 255, 80), (powerup['x'], powerup['y']), 20)
+            pygame.draw.circle(screen, (80, 255, 80), (powerup['x'], powerup['y']), 20)  # greenish
         if powerup['type'] == 'nuke':
-            pygame.draw.circle(screen, (255, 0, 255), (powerup['x'], powerup['y']), 20)
+            pygame.draw.circle(screen, (255, 0, 255), (powerup['x'], powerup['y']), 20) # purple
+        if powerup['type'] == 'long reach':
+            pygame.draw.circle(screen, (150, 75, 0), (powerup['x'], powerup['y']), 20) # brown
+        if powerup['type'] == 'rear shot':
+            pygame.draw.circle(screen, (255, 165, 0), (powerup['x'], powerup['y']), 20) # orange
+        if powerup['type'] == 'side shot':
+            pygame.draw.circle(screen, (100, 0, 100), (powerup['x'], powerup['y']), 20) # dark purple
 
     # SCORES
     screen.blit(font.render(f"score: {score}", True, (255,255,255)), (16, 16))
