@@ -73,7 +73,7 @@ def spawn_mob():
         return {'x': width, 'y': random.randint(0, height), 'speed': 10, 'health': 1, 'type': 'mob', 'size': 32}
 
 def spawn_powerup(enemy):
-    ptype = random.choices(['speed boost', 'nuke', 'long reach', 'rear shot', 'side shot'], weights = [20, 20, 20, 20, 20])[0]
+    ptype = random.choices(['speed boost', 'nuke', 'long reach', 'rear shot', 'side shot', 'shotgun'], weights = [20, 20, 20, 20, 20, 20])[0]
     if ptype == 'speed boost':
         return {'type': 'speed boost', 'x': enemy['x'], 'y': enemy['y'], 'timer': 1000}
     if ptype == 'nuke':
@@ -84,6 +84,8 @@ def spawn_powerup(enemy):
         return {'type': 'rear shot', 'x': enemy['x'], 'y': enemy['y'], 'timer': 1000}
     if ptype == 'side shot':
         return {'type': 'side shot', 'x': enemy['x'], 'y': enemy['y'], 'timer': 1000}
+    if ptype == 'shotgun':
+        return {'type': 'shotgun', 'x': enemy['x'], 'y': enemy['y'], 'timer': 1000}
 
 def apply_powerup(ptype):
     global player_speed, score, enemies, radius
@@ -101,7 +103,8 @@ def apply_powerup(ptype):
         active_effects[ptype] = 300
     if ptype == 'side shot':
         active_effects[ptype] = 300
-
+    if ptype == 'shotgun':
+        active_effects[ptype] = 300
 
 def remove_powerup(ptype):
     global player_speed, radius
@@ -217,6 +220,12 @@ while running:
                     if 'side shot' in active_effects:
                         bullets.append([player_x, player_y, direction[1], direction[0]])
                         bullets.append([player_x, player_y, -direction[1], -direction[0]])
+                    if 'shotgun' in active_effects:
+                        for sign in [-1, 1]:
+                            offset = sign*math.radians(30)
+                            new_dx = dx*math.cos(offset) - dy*math.sin(offset)
+                            new_dy = dx*math.sin(offset) + dy*math.cos(offset)
+                            bullets.append([player_x, player_y, new_dx, new_dy])
                     bullets.append([player_x, player_y, direction[0], direction[1]])
                 if game_over and event.key == pygame.K_r:
                     reset_game()
@@ -345,6 +354,8 @@ while running:
             pygame.draw.circle(screen, (255, 165, 0), (powerup['x'], powerup['y']), 20) # orange
         if powerup['type'] == 'side shot':
             pygame.draw.circle(screen, (100, 0, 100), (powerup['x'], powerup['y']), 20) # dark purple
+        if powerup['type'] == 'shotgun':
+            pygame.draw.circle(screen, (255, 192, 203), (powerup['x'], powerup['y']), 20) # pink
 
     # SCORES
     screen.blit(font.render(f"score: {score}", True, (255,255,255)), (16, 16))
