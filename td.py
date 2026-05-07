@@ -50,7 +50,7 @@ def spawn_enemy():
         'x': way_points[0][0],
         'y': way_points[0][1],
         'speed': 1,
-        'health': 5,
+        'health': current_wave,
         'target': 1
     }
 
@@ -128,7 +128,7 @@ def fire(tower, target):
         'y': tower['y'], 
         'dx': dx / dist,
         'dy': dy / dist,
-        'speed': 32,
+        'speed': 16,
         'damage': tower['damage']   
     })
     tower['cooldown'] = tower['fire_rate']
