@@ -6,7 +6,7 @@ import math
 # import images
 # Initialise pygame
 pygame.init()
-# font = pygame.SysFont(None, 128)
+game_over = False
 # Set up screen
 width = 2048
 height = 1500
@@ -17,6 +17,10 @@ clock = pygame.time.Clock()
 enemies = []
 towers = []
 bullets = []
+money = 10
+lives = 3
+current_wave = 1
+
 way_points = [
     (0, 1400),
     (1600, 1400),
@@ -57,6 +61,9 @@ def spawn_tower(x, y):
 def move_enemies():
     for enemy in enemies[:]:
         if enemy['target'] >= len(way_points):
+            lives -= 1
+            if lives <= 0:
+                game_over = True
             enemies.remove(enemy)
             continue
         tx = way_points[enemy['target']][0]
@@ -103,6 +110,7 @@ def fire(tower, target):
     tower['cooldown'] = tower['fire_rate']
 
 def update_bullets():
+    global money
     for bullet in bullets[:]:
         bullet['x'] += bullet['dx'] * bullet['speed']
         bullet['y'] += bullet['dy'] * bullet['speed']
@@ -117,6 +125,7 @@ def update_bullets():
                     bullets.remove(bullet)
                 if enemy['health'] <= 0:
                     enemies.remove(enemy)
+                    money += 1
                 break
 
 def update_towers():
@@ -132,6 +141,12 @@ def draw_bullets():
     for bullet in bullets:
         pygame.draw.circle(screen, (255, 220, 0), (int(bullet['x']), int(bullet['y'])), 10)
 
+def draw_display():
+    font = pygame.font.SysFont(None, 128)
+    screen.blit(font.render(f"money: ${money}", True, (255,255,255)), (16, 16))
+    screen.blit(font.render(f"current wave: {current_wave}", True, (255,255,255)), (16, 256))
+    screen.blit(font.render(f"lives: {lives}", True, (255,255,255)), (16, 136))
+
 enemies.append(spawn_enemy())
 towers.append(spawn_tower(1300, 1200))
 running = True
@@ -140,12 +155,14 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-    move_enemies()
-    update_towers()
-    update_bullets()
+    if game_over == False:
+        move_enemies()
+        update_towers()
+        update_bullets()
     screen.fill((0, 0, 0))
     draw_map()
     draw_enemies()
     draw_tower()
     draw_bullets()
+    draw_display()
     pygame.display.update()
