@@ -17,9 +17,12 @@ clock = pygame.time.Clock()
 enemies = []
 towers = []
 bullets = []
+spawn_queue = []
+spawn_timer = 0
 money = 10
 lives = 3
 current_wave = 1
+spawn_delay = 60
 
 way_points = [
     (0, 1400),
@@ -44,7 +47,7 @@ def spawn_enemy():
         'x': way_points[0][0],
         'y': way_points[0][1],
         'speed': 1,
-        'health': 1,
+        'health': 5,
         'target': 1
     }
 
@@ -52,16 +55,18 @@ def spawn_tower(x, y):
     return {
         'x': x,
         'y': y, 
-        'range': 300,
+        'range': 500,
         'damage': 1,
         'cooldown': 0,
-        'fire_rate': 30
+        'fire_rate': 16
     }
 
 def move_enemies():
+    global lives, money, game_over
     for enemy in enemies[:]:
         if enemy['target'] >= len(way_points):
             lives -= 1
+            money += 1
             if lives <= 0:
                 game_over = True
             enemies.remove(enemy)
@@ -86,14 +91,23 @@ def draw_tower():
         pygame.draw.rect(screen, (150, 150, 150), (tower['x']-32, tower['y']-32, 64, 64))
 
 def get_target(tower):
-    closest = None
-    closest_dist = tower['range']
+    # closest = None
+    # closest_dist = tower['range']
+    # for enemy in enemies:
+    #     dist = math.hypot(enemy['x'] - tower['x'], enemy['y'] - tower['y'])
+    #     if dist < closest_dist:
+    #         closest = enemy
+    #         closest_dist = dist
+    # return closest
+    furthest = None
+    furthest_dist = -1
     for enemy in enemies:
         dist = math.hypot(enemy['x'] - tower['x'], enemy['y'] - tower['y'])
-        if dist < closest_dist:
-            closest = enemy
-            closest_dist = dist
-    return closest
+        if dist < tower['range']:
+            if enemy['target'] > furthest_dist:
+                furthest = enemy
+                furthest_dist = enemy['target']
+    return furthest
 
 def fire(tower, target):
     dx = target['x'] - tower['x']
@@ -104,7 +118,7 @@ def fire(tower, target):
         'y': tower['y'], 
         'dx': dx / dist,
         'dy': dy / dist,
-        'speed': 6,
+        'speed': 32,
         'damage': tower['damage']   
     })
     tower['cooldown'] = tower['fire_rate']
@@ -147,18 +161,37 @@ def draw_display():
     screen.blit(font.render(f"current wave: {current_wave}", True, (255,255,255)), (16, 256))
     screen.blit(font.render(f"lives: {lives}", True, (255,255,255)), (16, 136))
 
-enemies.append(spawn_enemy())
-towers.append(spawn_tower(1300, 1200))
+def start_wave(wave_number):
+    total = wave_number * 5
+    for i in range(total):
+        spawn_queue.append(spawn_enemy())
+
+def update_spawning():
+    global spawn_timer
+    if not spawn_queue:
+        return
+    spawn_timer -= 1
+
+    if spawn_timer <= 0:
+        enemies.append(spawn_queue.pop(0))
+        spawn_timer = spawn_delay
+
+start_wave(1)
+towers.append(spawn_tower(1200, 1200))
 running = True
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-    if game_over == False:
+    if not game_over:
         move_enemies()
         update_towers()
         update_bullets()
+        update_spawning()
+    if not spawn_queue and not enemies and not game_over:
+        current_wave += 1
+        start_wave(current_wave)
     screen.fill((0, 0, 0))
     draw_map()
     draw_enemies()
