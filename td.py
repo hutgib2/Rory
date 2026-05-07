@@ -15,11 +15,11 @@ pygame.display.set_caption(('Tower defense'))
 clock = pygame.time.Clock()
 # variables
 building = True
-cost = 100
 enemies = []
 towers = []
 bullets = []
 spawn_queue = []
+cost = 100
 spawn_timer = 0
 money = 100
 lives = 3
@@ -50,7 +50,7 @@ def spawn_enemy():
         'x': way_points[0][0],
         'y': way_points[0][1],
         'speed': 1,
-        'health': current_wave,
+        'health': current_wave*2,
         'target': 1
     }
 
@@ -58,7 +58,7 @@ def spawn_tower(x, y):
     return {
         'x': x,
         'y': y, 
-        'range': 500,
+        'range': 512,
         'damage': 1,
         'cooldown': 0,
         'fire_rate': 16
@@ -90,15 +90,18 @@ def draw_enemies():
         pygame.draw.circle(screen, (255, 0, 0), (int(enemy['x']), int(enemy['y'])), 32)
 
 def draw_tower():
+    global cost
     for tower in towers[:]:
         pygame.draw.rect(screen, (150, 150, 150), (tower['x']-32, tower['y']-32, 64, 64))
+        pygame.draw.circle(screen, (100, 100, 100), (tower['x'], tower['y']), tower['range'], 2)
 
 def draw_build_phase():
+    global cost
     if building:
         font = pygame.font.SysFont(None, 128)
-        pygame.draw.rect(screen, (0, 80, 180), (width-440, height-160, 400, 100))
-        screen.blit(font.render('start_wave', True, (255, 255, 255)), (width-420, height-140))
-        screen.blit(font.render(f'place tower: ${cost}', True, (255, 220, 0)), (width-520, height-260))
+        pygame.draw.rect(screen, (0, 80, 180), (width-750, 20, 500, 100))
+        screen.blit(font.render('start wave', True, (255, 255, 255)), (width-720, 20))
+        screen.blit(font.render(f'place tower: ${cost}', True, (255, 220, 0)), (width-1000, 120))
 
 def get_target(tower):
     # closest = None
@@ -194,13 +197,14 @@ while running:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN and building:
             mx, my = pygame.mouse.get_pos()
-            if width - 440 <= mx <= width - 40 and height-160 <= my <= height - 60:
+            if width - 750 <= mx <= width - 250 and 20 <= my <= 120:
                 building = False
                 wave_complete = False
                 start_wave(current_wave)
             elif money >= cost:
                 towers.append(spawn_tower(mx, my))
                 money -= cost
+                cost += 10
     if not game_over:
         move_enemies()
         update_towers()
