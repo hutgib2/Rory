@@ -14,15 +14,18 @@ screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption(('Tower defense'))
 clock = pygame.time.Clock()
 # variables
+building = True
+cost = 100
 enemies = []
 towers = []
 bullets = []
 spawn_queue = []
 spawn_timer = 0
-money = 10
+money = 100
 lives = 3
-current_wave = 1
+current_wave = 0
 spawn_delay = 60
+wave_complete = False
 
 way_points = [
     (0, 1400),
@@ -89,6 +92,13 @@ def draw_enemies():
 def draw_tower():
     for tower in towers[:]:
         pygame.draw.rect(screen, (150, 150, 150), (tower['x']-32, tower['y']-32, 64, 64))
+
+def draw_build_phase():
+    if building:
+        font = pygame.font.SysFont(None, 128)
+        pygame.draw.rect(screen, (0, 80, 180), (width-440, height-160, 400, 100))
+        screen.blit(font.render('start_wave', True, (255, 255, 255)), (width-420, height-140))
+        screen.blit(font.render(f'place tower: ${cost}', True, (255, 220, 0)), (width-520, height-260))
 
 def get_target(tower):
     # closest = None
@@ -176,26 +186,35 @@ def update_spawning():
         enemies.append(spawn_queue.pop(0))
         spawn_timer = spawn_delay
 
-start_wave(1)
-towers.append(spawn_tower(1200, 1200))
 running = True
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.MOUSEBUTTONDOWN and building:
+            mx, my = pygame.mouse.get_pos()
+            if width - 440 <= mx <= width - 40 and height-160 <= my <= height - 60:
+                building = False
+                wave_complete = False
+                start_wave(current_wave)
+            elif money >= cost:
+                towers.append(spawn_tower(mx, my))
+                money -= cost
     if not game_over:
         move_enemies()
         update_towers()
         update_bullets()
         update_spawning()
-    if not spawn_queue and not enemies and not game_over:
+    if not spawn_queue and not enemies and not game_over and not wave_complete:
         current_wave += 1
-        start_wave(current_wave)
+        wave_complete = True
+        building = True
     screen.fill((0, 0, 0))
     draw_map()
     draw_enemies()
     draw_tower()
     draw_bullets()
     draw_display()
+    draw_build_phase()
     pygame.display.update()
